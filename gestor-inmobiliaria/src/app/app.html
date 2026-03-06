@@ -1,0 +1,258 @@
+<nav class="bg-white shadow-md p-4 sticky top-0 z-[100]">
+  <div class="max-w-6xl mx-auto flex justify-between items-center">
+    <div class="flex items-center gap-2 cursor-pointer" (click)="cambiarVista('catalogo')">
+      <span class="text-3xl">🏠</span>
+      <h1 class="text-2xl font-black text-blue-600 tracking-tighter">INMO-SOFT</h1>
+    </div>
+
+    <div class="flex gap-4 items-center">
+      <button (click)="cambiarVista('catalogo')"
+              [class.text-blue-600]="vistaActual === 'catalogo'"
+              class="font-bold hover:text-blue-500 transition text-gray-500">
+        Catálogo
+      </button>
+
+      <button *ngIf="usuarioLogueado?.rol === 'Administrador' || usuarioLogueado?.rol === 'Tecnico'"
+              (click)="cambiarVista('listaIncidentes')"
+              [class.text-red-600]="vistaActual === 'listaIncidentes'"
+              class="font-bold hover:text-red-500 transition text-gray-500">
+        Incidentes
+      </button>
+
+      <button *ngIf="usuarioLogueado?.rol === 'Administrador'"
+              (click)="cambiarVista('admin')"
+              class="bg-blue-600 text-white px-5 py-2 rounded-full font-bold hover:bg-blue-700 shadow-md transition">
+        ➕ Publicar
+      </button>
+
+      <div class="ml-4 border-l pl-4 flex items-center gap-3">
+        <div *ngIf="usuarioLogueado" class="text-right hidden md:block">
+          <p class="text-[10px] font-black text-blue-600 uppercase leading-none">{{usuarioLogueado.rol}}</p>
+          <p class="text-xs font-bold text-gray-700">{{usuarioLogueado.nombreCompleto}}</p>
+        </div>
+
+        <button *ngIf="!usuarioLogueado" (click)="vistaActual = 'login'"
+                class="text-sm font-black text-blue-600 border-2 border-blue-600 px-4 py-1.5 rounded-full hover:bg-blue-600 hover:text-white transition">
+          INGRESAR
+        </button>
+
+        <button *ngIf="usuarioLogueado" (click)="logout()"
+                class="text-gray-400 hover:text-red-500 transition text-xl" title="Cerrar Sesión">
+          🚪
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="min-h-screen bg-gray-50 p-4 md:p-8 relative">
+  <div class="max-w-6xl mx-auto">
+
+    <div *ngIf="vistaActual === 'login'"
+         class="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-gray-100 relative">
+        <button (click)="vistaActual = 'catalogo'" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600">✕</button>
+
+        <h2 class="text-2xl font-black text-center text-gray-800 mb-6 uppercase tracking-tighter">
+          {{ modoRegistro ? 'Crear Cuenta' : 'Iniciar Sesión' }}
+        </h2>
+
+        <div class="space-y-4">
+          <div *ngIf="modoRegistro">
+            <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Nombre Completo</label>
+            <input [(ngModel)]="authData.nombreCompleto" type="text" class="w-full bg-gray-50 border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none font-bold">
+          </div>
+          <div>
+            <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Email</label>
+            <input [(ngModel)]="authData.email" type="email" class="w-full bg-gray-50 border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none font-bold">
+          </div>
+          <div>
+            <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Contraseña</label>
+            <input [(ngModel)]="authData.password" type="password" class="w-full bg-gray-50 border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none font-bold">
+          </div>
+          <button (click)="modoRegistro ? ejecutarRegistro() : ejecutarLogin()"
+                  class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 transition shadow-lg shadow-blue-100 uppercase tracking-widest text-sm">
+            {{ modoRegistro ? 'Registrarse ahora' : 'Entrar al sistema' }}
+          </button>
+        </div>
+
+        <button (click)="modoRegistro = !modoRegistro" class="w-full mt-6 text-sm font-bold text-gray-400 hover:text-blue-600 transition text-center">
+          {{ modoRegistro ? '¿Ya tienes cuenta? Ingresa' : '¿No tienes cuenta? Regístrate gratis' }}
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="vistaActual === 'catalogo'">
+      <div class="bg-white p-6 rounded-2xl shadow-sm mb-6 border border-gray-100">
+        <div class="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
+          <div class="md:col-span-2">
+            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">Búsqueda</label>
+            <input [(ngModel)]="filtroTexto" placeholder="📍 Dirección o Localidad..."
+                   class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">Operación</label>
+            <select [(ngModel)]="filtroOperacion" class="w-full border-gray-200 border p-3 rounded-xl outline-none">
+              <option value="">Todas</option>
+              <option value="Venta">Venta</option>
+              <option value="Alquiler">Alquiler</option>
+              <option value="Alquilada">Alquilada</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">Propiedad</label>
+            <select [(ngModel)]="filtroTipo" class="w-full border-gray-200 border p-3 rounded-xl outline-none">
+              <option value="">Todos</option>
+              <option value="Casa">Casa</option>
+              <option value="Departamento">Departamento</option>
+              <option value="Terreno">Terreno</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">Mínimo</label>
+            <input type="number" [(ngModel)]="precioMin" class="w-full border-gray-200 border p-3 rounded-xl outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 ml-1 uppercase">Máximo</label>
+            <input type="number" [(ngModel)]="precioMax" class="w-full border-gray-200 border p-3 rounded-xl outline-none">
+          </div>
+          <button (click)="limpiarFiltros()" class="text-blue-600 font-bold text-sm p-3 hover:bg-blue-50 rounded-xl transition">
+            Limpiar
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div *ngFor="let p of propiedadesFiltradas" class="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group">
+          <div class="relative">
+            <div class="absolute top-4 left-4 z-10">
+              <span class="text-xs font-black px-3 py-1 rounded-full shadow-sm uppercase text-white"
+                    [ngClass]="{
+                      'bg-blue-600': (p.tipoOperacion || p.TipoOperacion) === 'Venta',
+                      'bg-green-500': (p.tipoOperacion || p.TipoOperacion) === 'Alquiler',
+                      'bg-orange-500': (p.tipoOperacion || p.TipoOperacion) === 'Alquilada'
+                    }">
+                {{ p.tipoOperacion || p.TipoOperacion }}
+              </span>
+            </div>
+
+            <div *ngIf="usuarioLogueado?.rol === 'Administrador'" class="absolute top-4 right-4 z-10 flex gap-2">
+              <button (click)="prepararEdicion(p)" class="bg-white/90 p-2 rounded-full shadow-md hover:bg-white text-blue-600">✏️</button>
+              <button (click)="borrarPropiedad(p.id || p.Id)" class="bg-white/90 p-2 rounded-full shadow-md hover:bg-white text-red-500">🗑️</button>
+            </div>
+
+            <div class="h-48 bg-gray-200 flex items-center justify-center">
+              <span class="text-4xl text-gray-400">🖼️</span>
+            </div>
+          </div>
+
+          <div class="p-6">
+            <h3 class="font-bold text-xl text-gray-800 h-14 overflow-hidden">{{ p.direccion || p.Direccion }}</h3>
+            <div class="flex justify-between items-center my-2">
+              <p class="text-blue-600 font-black text-2xl">${{ p.precio || p.Precio }}</p>
+              <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-xs font-bold">🛏️ {{ p.ambientes || p.Ambientes || 0 }} Amb.</span>
+            </div>
+            <p class="text-sm text-gray-500 mb-2 italic">📍 {{ p.localidad || p.Localidad }}</p>
+
+            <div class="mt-4 pt-4 border-t flex justify-between items-center">
+              <span class="text-sm font-bold text-gray-600">{{ p.tipoInmueble || p.TipoInmueble }}</span>
+              <button *ngIf="usuarioLogueado && (p.tipoOperacion || p.TipoOperacion) === 'Alquilada'"
+                      (click)="abrirReporte(p)"
+                      class="bg-red-50 text-red-600 px-3 py-1 rounded-lg font-black text-xs hover:bg-red-100 transition animate-pulse">
+                ⚠️ REPORTAR
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="vistaActual === 'listaIncidentes'">
+      <div *ngIf="propiedadSeleccionada" class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 max-w-xl mx-auto">
+        <h2 class="text-2xl font-black mb-6 uppercase">Reportar Incidente</h2>
+        <div class="space-y-4">
+          <input [(ngModel)]="nuevoIncidente.titulo" placeholder="¿Qué sucedió?" class="w-full bg-gray-50 border-2 border-gray-100 p-3 rounded-xl outline-none font-bold">
+          <div class="grid grid-cols-2 gap-4">
+            <select [(ngModel)]="nuevoIncidente.oficio" class="bg-gray-50 border-2 border-gray-100 p-3 rounded-xl outline-none font-bold">
+              <option value="Plomería">Plomería</option>
+              <option value="Electricidad">Electricidad</option>
+              <option value="Mantenimiento">Mantenimiento</option>
+            </select>
+            <select [(ngModel)]="nuevoIncidente.urgencia" class="bg-gray-50 border-2 border-gray-100 p-3 rounded-xl outline-none font-bold">
+              <option value="Baja">Baja</option>
+              <option value="Media">Media</option>
+              <option value="Alta">Alta</option>
+            </select>
+          </div>
+          <textarea [(ngModel)]="nuevoIncidente.descripcion" placeholder="Detalles..." rows="4" class="w-full bg-gray-50 border-2 border-gray-100 p-3 rounded-xl outline-none font-bold"></textarea>
+          <div class="flex gap-4">
+            <button (click)="cancelarReporte()" class="w-1/2 bg-gray-100 py-3 rounded-xl font-bold">Cancelar</button>
+            <button (click)="enviarIncidente()" class="w-1/2 bg-red-600 text-white py-3 rounded-xl font-bold">Enviar Reporte</button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!propiedadSeleccionada" class="bg-white p-8 rounded-[2.5rem] shadow-xl">
+        <h2 class="text-2xl font-black mb-6">Gestión de Reparaciones</h2>
+        <table class="w-full text-left">
+          <thead>
+            <tr class="text-[10px] text-gray-400 uppercase border-b">
+              <th class="py-3">Estado</th>
+              <th>Problema</th>
+              <th>Urgencia</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let inc of incidentes" class="border-b hover:bg-gray-50">
+              <td class="py-4">
+                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-blue-100 text-blue-700">{{inc.estado}}</span>
+              </td>
+              <td>
+                <p class="font-bold">{{inc.titulo}}</p>
+                <p class="text-[10px] text-blue-600 uppercase">{{inc.oficio}}</p>
+              </td>
+              <td class="text-xs font-black" [class.text-red-600]="inc.urgencia === 'Alta'">{{inc.urgencia}}</td>
+              <td>
+                <button *ngIf="inc.estado === 'Pendiente'" (click)="actualizarEstadoIncidente(inc, 'En Proceso')" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold">TOMAR</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div *ngIf="vistaActual === 'admin'" class="animate-in fade-in">
+      <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 max-w-2xl mx-auto">
+        <h2 class="text-3xl font-black text-gray-800 mb-8 uppercase tracking-tighter">{{ idEdicion ? 'Editar Propiedad' : 'Nueva Publicación' }}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="md:col-span-2">
+            <label class="text-[10px] font-black text-gray-400 ml-1 uppercase">Dirección</label>
+            <input [(ngModel)]="nuevaDireccion" type="text" class="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none font-bold">
+          </div>
+          <div>
+            <label class="text-[10px] font-black text-gray-400 ml-1 uppercase">Precio</label>
+            <input [(ngModel)]="nuevoPrecio" type="text" class="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl font-bold">
+          </div>
+          <div>
+            <label class="text-[10px] font-black text-gray-400 ml-1 uppercase">Localidad</label>
+            <input [(ngModel)]="nuevaLocalidad" type="text" class="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl font-bold">
+          </div>
+          <select [(ngModel)]="nuevoTipoInmueble" class="bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl font-bold">
+            <option value="Casa">Casa</option>
+            <option value="Departamento">Departamento</option>
+            <option value="Terreno">Terreno</option>
+          </select>
+          <select [(ngModel)]="nuevaOperacion" class="bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl font-bold">
+            <option value="Venta">Venta</option>
+            <option value="Alquiler">Alquiler</option>
+          </select>
+          <button (click)="guardarPropiedad()" class="md:col-span-2 bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg uppercase">
+            {{ idEdicion ? 'Guardar Cambios' : 'Publicar Ahora' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
